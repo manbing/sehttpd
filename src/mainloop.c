@@ -160,7 +160,7 @@ int main()
                     continue;
                 }
 
-                do_request(events[i].data.ptr);
+                http_do_request(events[i].data.ptr);
             }
         }
     }

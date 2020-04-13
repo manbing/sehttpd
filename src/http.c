@@ -214,7 +214,7 @@ static inline int init_http_out(http_out_t *o, int fd)
     return 0;
 }
 
-void do_request(void *ptr)
+void http_do_request(void *ptr)
 {
     http_request_t *r = ptr;
     int fd = r->fd;
