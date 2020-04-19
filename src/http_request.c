@@ -40,6 +40,12 @@ static int http_process_connection(http_request_t *r UNUSED,
     return 0;
 }
 
+static void double_abs(double *value)
+{
+    u_int64_t *j = (u_int64_t *) value;
+    *j &= ~((u_int64_t) 1 << 63);
+}
+
 static int http_process_if_modified_since(http_request_t *r UNUSED,
                                           http_out_t *out,
                                           char *data,
@@ -51,8 +57,8 @@ static int http_process_if_modified_since(http_request_t *r UNUSED,
 
     time_t client_time = mktime(&tm);
     double time_diff = difftime(out->mtime, client_time);
-    /* TODO: use custom absolute value function rather without libm */
-    if (fabs(time_diff) < 1e-6) { /* Not modified */
+    double_abs(&time_diff);
+    if (time_diff < 1e-6) { /* Not modified */
         out->modified = false;
         out->status = HTTP_NOT_MODIFIED;
     }
