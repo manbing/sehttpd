@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <mimalloc.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
@@ -57,8 +58,7 @@ static bool resize(prio_queue_t *ptr, size_t new_size)
         return false;
     }
 
-    /* TODO: use memory pool to avoid unexpected fragmentation */
-    void **new_ptr = malloc(sizeof(void *) * new_size);
+    void **new_ptr = mi_malloc(sizeof(void *) * new_size);
     if (!new_ptr) {
         log_err("resize: malloc failed");
         return false;

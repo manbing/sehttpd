@@ -19,6 +19,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
+
 static ssize_t writen(int fd, void *usrbuf, size_t n)
 {
     ssize_t nwritten;

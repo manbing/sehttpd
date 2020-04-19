@@ -9,12 +9,12 @@ $(GIT_HOOKS):
 
 include common.mk
 
-CFLAGS = -I./src
+CFLAGS = -I./src -I/usr/local/lib/mimalloc-1.6/include
 CFLAGS += -O2
 CFLAGS += -std=gnu99 -Wall -W
 CFLAGS += -DUNUSED="__attribute__((unused))"
 CFLAGS += -DNDEBUG
-LDFLAGS =
+LDFLAGS = -L/usr/local/lib/mimalloc-1.6 -lmimalloc
 
 # standard build rules
 .SUFFIXES: .o .c
