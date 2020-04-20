@@ -40,7 +40,7 @@ static int http_process_connection(http_request_t *r UNUSED,
     return 0;
 }
 
-static void double_abs(double *value)
+static inline void double_abs(double *value)
 {
     u_int64_t *j = (u_int64_t *) value;
     *j &= ~((u_int64_t) 1 << 63);
