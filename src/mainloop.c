@@ -31,6 +31,11 @@ static int open_listenfd(int port)
                    sizeof(int)) < 0)
         return -1;
 
+    /* Prompt kernel do zero-copy */
+    if (setsockopt(listenfd, SOL_SOCKET, SO_ZEROCOPY, &optval, sizeof(optval)) <
+        0)
+        return -1;
+
     /* Listenfd will be an endpoint for all requests to given port. */
     struct sockaddr_in serveraddr = {
         .sin_family = AF_INET,
