@@ -35,16 +35,34 @@ int http_parse_request_line(http_request_t *r)
         s_almost_done
     } state;
 
+    static void *dispatch_table[] = {&&lab_s_start,
+                                     &&lab_s_method,
+                                     &&lab_s_spaces_before_uri,
+                                     &&lab_s_after_slash_in_uri,
+                                     &&lab_s_http,
+                                     &&lab_s_http_H,
+                                     &&lab_s_http_HT,
+                                     &&lab_s_http_HTT,
+                                     &&lab_s_http_HTTP,
+                                     &&lab_s_first_major_digit,
+                                     &&lab_s_major_digit,
+                                     &&lab_s_first_minor_digit,
+                                     &&lab_s_minor_digit,
+                                     &&lab_s_spaces_after_digit,
+                                     &&lab_s_almost_done};
+
+#define DISPATCH() goto *dispatch_table[state]
+
     state = r->state;
 
     for (pi = r->pos; pi < r->last; pi++) {
         p = (uint8_t *) &r->buf[pi % MAX_BUF];
         ch = *p;
 
-        /* TODO: use computed goto for efficient dispatching */
-        switch (state) {
+        DISPATCH();
+        for (;;) {
         /* HTTP methods: GET, HEAD, POST */
-        case s_start:
+        lab_s_start:
             r->request_start = p;
 
             if (ch == CR || ch == LF)
@@ -56,7 +74,7 @@ int http_parse_request_line(http_request_t *r)
             state = s_method;
             break;
 
-        case s_method:
+        lab_s_method:
             if (ch == ' ') {
                 m = r->request_start;
 
@@ -93,7 +111,7 @@ int http_parse_request_line(http_request_t *r)
             break;
 
         /* space* before URI */
-        case s_spaces_before_uri:
+        lab_s_spaces_before_uri:
             if (ch == '/') {
                 r->uri_start = p;
                 state = s_after_slash_in_uri;
@@ -108,7 +126,7 @@ int http_parse_request_line(http_request_t *r)
             }
             break;
 
-        case s_after_slash_in_uri:
+        lab_s_after_slash_in_uri:
             switch (ch) {
             case ' ':
                 r->uri_end = p;
@@ -120,7 +138,7 @@ int http_parse_request_line(http_request_t *r)
             break;
 
         /* space+ after URI */
-        case s_http:
+        lab_s_http:
             switch (ch) {
             case ' ':
                 break;
@@ -132,7 +150,7 @@ int http_parse_request_line(http_request_t *r)
             }
             break;
 
-        case s_http_H:
+        lab_s_http_H:
             switch (ch) {
             case 'T':
                 state = s_http_HT;
@@ -142,7 +160,7 @@ int http_parse_request_line(http_request_t *r)
             }
             break;
 
-        case s_http_HT:
+        lab_s_http_HT:
             switch (ch) {
             case 'T':
                 state = s_http_HTT;
@@ -152,7 +170,7 @@ int http_parse_request_line(http_request_t *r)
             }
             break;
 
-        case s_http_HTT:
+        lab_s_http_HTT:
             switch (ch) {
             case 'P':
                 state = s_http_HTTP;
@@ -162,7 +180,7 @@ int http_parse_request_line(http_request_t *r)
             }
             break;
 
-        case s_http_HTTP:
+        lab_s_http_HTTP:
             switch (ch) {
             case '/':
                 state = s_first_major_digit;
@@ -173,7 +191,7 @@ int http_parse_request_line(http_request_t *r)
             break;
 
         /* first digit of major HTTP version */
-        case s_first_major_digit:
+        lab_s_first_major_digit:
             if (ch < '1' || ch > '9')
                 return HTTP_PARSER_INVALID_REQUEST;
 
@@ -182,7 +200,7 @@ int http_parse_request_line(http_request_t *r)
             break;
 
         /* major HTTP version or dot */
-        case s_major_digit:
+        lab_s_major_digit:
             if (ch == '.') {
                 state = s_first_minor_digit;
                 break;
@@ -195,7 +213,7 @@ int http_parse_request_line(http_request_t *r)
             break;
 
         /* first digit of minor HTTP version */
-        case s_first_minor_digit:
+        lab_s_first_minor_digit:
             if (ch < '0' || ch > '9')
                 return HTTP_PARSER_INVALID_REQUEST;
 
@@ -204,7 +222,7 @@ int http_parse_request_line(http_request_t *r)
             break;
 
         /* minor HTTP version or end of request line */
-        case s_minor_digit:
+        lab_s_minor_digit:
             if (ch == CR) {
                 state = s_almost_done;
                 break;
@@ -224,7 +242,7 @@ int http_parse_request_line(http_request_t *r)
             r->http_minor = r->http_minor * 10 + ch - '0';
             break;
 
-        case s_spaces_after_digit:
+        lab_s_spaces_after_digit:
             switch (ch) {
             case ' ':
                 break;
@@ -239,7 +257,7 @@ int http_parse_request_line(http_request_t *r)
             break;
 
         /* end of request line */
-        case s_almost_done:
+        lab_s_almost_done:
             r->request_end = p - 1;
             switch (ch) {
             case LF:
